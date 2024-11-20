@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <ctype.h>
+
+// Function to find modular multiplicative inverse
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1)
+            return x;
+    }
+    return -1; // If no modular inverse exists
+}
+
+// Function to decrypt using the affine cipher formula
+char decryptAffine(char c, int a_inv, int b) {
+    int m = 26; // Alphabet size
+    if (isalpha(c)) {
+        int y = toupper(c) - 'A';
+        int x = (a_inv * (y - b + m)) % m; // Ensure non-negative modulo
+        return x + 'A';
+    }
+    return c; // Non-alphabetic characters remain unchanged
+}
+
+int main() {
+    // Ciphertext properties
+    char mostFrequentCipher = 'B';
+    char secondFrequentCipher = 'U';
+    char mostFrequentPlain = 'E';
+    char secondFrequentPlain = 'T';
+    
+    // Solve for 'a' and 'b'
+    int m = 26; // Size of the alphabet
+    int y1 = mostFrequentCipher - 'A';     // Ciphertext mapping of 'B'
+    int y2 = secondFrequentCipher - 'A';   // Ciphertext mapping of 'U'
+    int x1 = mostFrequentPlain - 'A';      // Plaintext mapping of 'E'
+    int x2 = secondFrequentPlain - 'A';    // Plaintext mapping of 'T'
+    
+    // Two equations: y1 = (a * x1 + b) mod m, y2 = (a * x2 + b) mod m
+    int a = ((y1 - y2) * modInverse(x1 - x2, m)) % m; // Solve for 'a'
+    if (a < 0) a += m; // Ensure 'a' is positive
+    int b = (y1 - a * x1) % m; // Solve for 'b'
+    if (b < 0) b += m; // Ensure 'b' is positive
+
+    // Modular inverse of 'a'
+    int a_inv = modInverse(a, m);
+    if (a_inv == -1) {
+        printf("No modular inverse for 'a'. Decryption not possible.\n");
+        return 1;
+    }
+
+    // Input ciphertext
+    char ciphertext[] = "BUZBU";
+    char plaintext[sizeof(ciphertext)];
+    
+    // Decrypt the ciphertext
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        plaintext[i] = decryptAffine(ciphertext[i], a_inv, b);
+    }
+    plaintext[sizeof(ciphertext) - 1] = '\0'; // Null-terminate the string
+
+    // Output
+    printf("Ciphertext: %s\n", ciphertext);
+    printf("Plaintext: %s\n", plaintext);
+    return 0;
+}
